@@ -2,4 +2,4 @@
 myenv/
 
 # Exclude database file
-app.db
+db.sqlite3
