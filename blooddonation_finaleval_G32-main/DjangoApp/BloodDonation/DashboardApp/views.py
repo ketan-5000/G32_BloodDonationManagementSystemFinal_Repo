@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Sum
-from .models import BloodDonation, DonationCamp
+from .models import BloodDonation, DonationCamp, BloodRequest
 
 @login_required
 def add_camp_view(request):
@@ -59,62 +59,6 @@ def search_camp_view(request):
 
 def is_superuser(user):
     return user.is_authenticated and user.is_superuser
-
-
-@login_required
-def edit_donation_view(request, donation_id):
-    if not request.user.is_superuser:
-        messages.error(request, "❌ You don't have permission to edit this donation.")
-        return redirect('dashboard')
-
-    donation = get_object_or_404(BloodDonation, id=donation_id)
-
-    if request.method == "POST":
-        blood_group = request.POST.get('blood_group')
-        amount = request.POST.get('amount')
-        city = request.POST.get('city')
-        weight = request.POST.get('weight')
-        age = request.POST.get('age')
-
-        if not all([blood_group, amount, city, weight, age]):
-            messages.error(request, "❌ All fields are required.")
-        elif float(amount) <= 0:
-            messages.error(request, "❌ Amount must be greater than 0.")
-        elif int(age) < 18:
-            messages.warning(request, "❌ Donor must be at least 18 years old.")
-        elif float(weight) < 50:
-            messages.warning(request, "❌ Donor must weigh at least 50 kg.")
-        else:
-            donation.blood_group = blood_group
-            donation.amount = float(amount)
-            donation.city = city
-            donation.weight = float(weight)
-            donation.age = int(age)
-            donation.save()
-
-            messages.success(request, f"✅ Donation by {donation.donor.name} updated successfully.")
-            return redirect('dashboard')
-
-    return render(request, 'edit_donation.html', {'donation': donation})
-
-
-
-@login_required
-def delete_donation_view(request, donation_id):
-    if not request.user.is_superuser:
-        messages.error(request, "❌ You don't have permission to delete this donation.")
-        return redirect('dashboard')
-
-    donation = get_object_or_404(BloodDonation, id=donation_id)
-
-    if request.method == "POST":
-        donation.delete()
-        messages.success(request, f"Donation by {donation.donor.name} deleted successfully.")
-        return redirect('dashboard')
-
-    return render(request, 'confirm_delete.html', {'donation': donation})
-
-
 
 
 @login_required
@@ -190,7 +134,6 @@ def add_donation_view(request):
         'city_choices': city_choices
     })
 
-
 @login_required
 def request_blood_view(request):
     blood_groups = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"]
@@ -199,18 +142,62 @@ def request_blood_view(request):
         for bg in blood_groups
     }
 
-    donors = None
+    # Admin approving a request
+    if request.user.is_superuser and request.method == 'POST' and 'approve_request_id' in request.POST:
+        try:
+            req_id = int(request.POST.get('approve_request_id'))
+            req = BloodRequest.objects.get(id=req_id)
 
-    if request.method == 'POST':
+            if req.is_approved:
+                messages.info(request, "ℹ️ Request already approved.")
+            else:
+                available = blood_data.get(req.blood_group, 0)
+                if available >= req.quantity_needed:
+                    # Deduct blood from available donations
+                    remaining = req.quantity_needed
+                    donations = BloodDonation.objects.filter(blood_group=req.blood_group).order_by('donation_date')
+                    for donation in donations:
+                        if remaining <= 0:
+                            break
+                        if donation.amount <= remaining:
+                            remaining -= donation.amount
+                            donation.amount = 0
+                        else:
+                            donation.amount -= remaining
+                            remaining = 0
+                        donation.save()
+
+                    req.is_approved = True
+                    req.save()
+                    messages.success(request, f"✅ Approved request from {req.requester.get_full_name() or req.requester.username} for {req.blood_group}.")
+                else:
+                    messages.error(request, f"❌ Not enough {req.blood_group} blood available to approve this request.")
+        except (BloodRequest.DoesNotExist, ValueError):
+            messages.error(request, "❌ Request not found or invalid ID.")
+        return redirect('request_blood')
+
+    # Regular user submitting a blood request
+    elif not request.user.is_superuser and request.method == 'POST':
         selected_blood_group = request.POST.get('blood_group')
-        available_pints = blood_data.get(selected_blood_group, 0)
+        quantity = request.POST.get('quantity_needed')
+        try:
+            quantity = float(quantity)
+        except (ValueError, TypeError):
+            quantity = 1.0
 
-        if available_pints == 0:
-            messages.warning(request, f"❌ No pints available for {selected_blood_group} blood group.")
+        if selected_blood_group:
+            BloodRequest.objects.create(
+                requester=request.user,
+                blood_group=selected_blood_group,
+                quantity_needed=quantity,
+            )
+            messages.success(request, f"✅ Your request for {selected_blood_group} has been submitted.")
         else:
-            donors = BloodDonation.objects.filter(blood_group=selected_blood_group)
+            messages.error(request, "❌ Invalid blood group.")
+
+    pending_requests = BloodRequest.objects.filter(is_approved=False) if request.user.is_superuser else None
 
     return render(request, 'request_blood.html', {
         'blood_data': blood_data,
-        'donors': donors
+        'pending_requests': pending_requests,
     })

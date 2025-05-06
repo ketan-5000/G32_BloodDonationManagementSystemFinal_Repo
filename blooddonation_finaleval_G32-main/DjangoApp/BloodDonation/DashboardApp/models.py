@@ -51,28 +51,15 @@ class DonationCamp(models.Model):
     contact_info = models.CharField(max_length=255)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
-
 class BloodRequest(models.Model):
-    BLOOD_GROUP_CHOICES = [
-        ("A+", "A+"), ("A-", "A-"),
-        ("B+", "B+"), ("B-", "B-"),
-        ("O+", "O+"), ("O-", "O-"),
-        ("AB+", "AB+"), ("AB-", "AB-")
-    ]
+    BLOOD_GROUP_CHOICES = BloodDonation.BLOOD_GROUP_CHOICES
+    CITY_CHOICES = BloodDonation.CITY_CHOICES
 
-    CITY_CHOICES = [
-        ("Delhi", "Delhi"),
-        ("Mumbai", "Mumbai"),
-        ("Chandigarh", "Chandigarh"),
-        ("Rajpura", "Rajpura"),
-        ("Ludhiana", "Ludhiana"),
-        ("Bathinda", "Bathinda"),
-        ("Patiala", "Patiala"),
-    ]
+    requester = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
     blood_group = models.CharField(max_length=3, choices=BLOOD_GROUP_CHOICES)
-    available_pints = models.FloatField(default=0)
-    donor_details = models.TextField(blank=True, null=True)
+    quantity_needed = models.FloatField(default=1.0)
+    requested_on = models.DateTimeField(default=timezone.now)
+    is_approved = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.requester_name} requested {self.quantity_needed} pints of {self.blood_group}"
-
+        return f"{self.requester.name} requested {self.quantity_needed} pints of {self.blood_group}"

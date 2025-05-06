@@ -5,8 +5,6 @@ urlpatterns = [
     path('', views.dashboard_view, name='dashboard'),
     path('donate/', views.add_donation_view, name='add_donation'), 
     path('request/', views.request_blood_view, name='request_blood'), 
-    path('donation/edit/<int:donation_id>/', views.edit_donation_view, name='edit_donation'),
-    path('donation/delete/<int:donation_id>/', views.delete_donation_view, name='delete_donation'),
     path('add-camp/', views.add_camp_view, name='add_camp'),
     path('search-camp/', views.search_camp_view, name='search_camp'),
 
