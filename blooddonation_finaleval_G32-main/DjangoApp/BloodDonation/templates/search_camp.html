@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Search Blood Donation Camps{% endblock %}
+
+{% block style %}
+<style>
+    .card {
+        background: url('/static/images/search-camp-bg.jpg') no-repeat center center;
+        background-size: cover;
+        border-radius: 15px;
+        padding: 30px;
+        color: white;
+    }
+
+    body {
+        background: linear-gradient(to bottom, #043672, #1c2a37);
+        color: white;
+    }
+
+    .card-header {
+        background-color: #222;
+        color: white;
+    }
+
+    .btn-primary {
+        background-color: #4169E1;
+        border: none;
+    }
+
+    .btn-primary:hover {
+        background-color: #1E3A56;
+    }
+
+    .form-control, .form-select {
+        background-color: rgba(255, 255, 255, 0.85);
+        border: 1px solid #b0c4de;
+        color: #333;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #4169E1;
+        box-shadow: 0 0 5px rgba(65, 105, 225, 0.5);
+    }
+
+    h2, h4 {
+        color: #fff;
+    }
+
+    .form-label {
+        color: rgb(222, 182, 176);
+    }
+</style>
+{% endblock %}
+
+{% block main_block %}
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Search Blood Donation Camps</h2>
+
+    <div class="card shadow p-4 mb-4">
+        <div class="card-header text-center">
+            <h4>Filter Camps</h4>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3 justify-content-center">
+                <div class="col-md-4">
+                    <label for="city" class="form-label">City:</label>
+                    <select name="city" id="city" class="form-control">
+                        <option value="">All</option>
+                        {% for value, label in city_choices %}
+                            <option value="{{ value }}" {% if selected_city == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">Filter</button>
+                    <a href="{% url 'search_camp' %}" class="btn btn-danger">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped text-white">
+            <thead class="bg-dark">
+                <tr>
+                    <th>Camp Name</th>
+                    <th>City</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Organizer</th>
+                    <th>Contact Info</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for camp in camps %}
+                <tr>
+                    <td>{{ camp.camp_name }}</td>
+                    <td>{{ camp.city }}</td>
+                    <td>{{ camp.date }}</td>
+                    <td>{{ camp.time }}</td>
+                    <td>{{ camp.organizer_name }}</td>
+                    <td>{{ camp.contact_info }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center">No camps found for selected filters.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

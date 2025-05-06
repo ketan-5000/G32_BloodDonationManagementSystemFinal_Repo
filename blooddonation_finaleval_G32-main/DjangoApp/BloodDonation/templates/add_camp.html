@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Organize Blood Donation Camp{% endblock %}
+
+{% block style %}
+<style>
+    .card {
+        background: url('/static/images/organize-camp-bg.jpg') no-repeat center center;
+        background-size: cover;
+        position: relative;
+        overflow: hidden;
+        border-radius: 15px;
+        padding: 30px;
+        color: white;
+    }
+
+    body {
+        background: linear-gradient(to bottom,rgb(5, 71, 193), #1c2a37);
+        color: white;
+    }
+
+    .card-header {
+        background-color: #333;
+        color: white;
+    }
+
+    .btn-primary {
+        background-color: #4169E1;
+        border: none;
+    }
+
+    .btn-primary:hover {
+        background-color: #1E3A56;
+    }
+
+    .form-control, .form-select {
+        background-color: rgba(255, 255, 255, 0.85);
+        border: 1px solid #b0c4de;
+        color: #333;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #4169E1;
+        box-shadow: 0 0 5px rgba(65, 105, 225, 0.5);
+    }
+
+    h2 {
+        color: #fff;
+    }
+
+    .form-label {
+        color:rgb(222, 182, 176);
+    }
+</style>
+{% endblock %}
+{% block main_block %}
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Organize a Blood Donation Camp</h2>
+
+    <div class="card shadow p-4">
+        <div class="card-header text-center">
+            <h4>Donation Camp Form</h4>
+        </div>
+        <div class="card-body">
+            <form action="{% url 'add_camp' %}" method="POST">
+                {% csrf_token %}
+
+                <div class="form-group mb-3">
+                    <label for="camp_name">Camp Name</label>
+                    <input type="text" class="form-control" id="camp_name" name="camp_name" placeholder="Enter camp name" required>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="city">City</label>
+                    <select class="form-control" id="city" name="city" required>
+                        {% for value, label in city_choices %}
+                            <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="date">Date of Camp</label>
+                    <input type="date" class="form-control" id="date" name="date" required>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="time">Time of Camp</label>
+                    <input type="time" class="form-control" id="time" name="time" required>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="organizer_name">Organizer Name</label>
+                    <input type="text" class="form-control" id="organizer_name" name="organizer_name" placeholder="Enter organizer's name" required>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="contact_info">Contact Information</label>
+                    <input type="text" class="form-control" id="contact_info" name="contact_info" placeholder="Enter contact info (email/phone)" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block mt-4">Submit Camp Details</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
